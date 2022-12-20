@@ -1,0 +1,45 @@
+services:
+  geoserver:
+    image: geoserver-docker.osgeo.org/geoserver:2.22-RC
+    environment:
+      SKIP_DEMO_DATA: true
+    volumes:
+      - ./geoserver/data/:/opt/geoserver_data/
+      - ./data/:/opt/marcis/
+  nginx:
+    profiles:
+      - prod
+    build:
+      context: catalog
+      dockerfile: nginx/prod.Dockerfile
+    environment:
+      SERVER_NAME: localhost
+      GEOSERVER: geoserver:8080
+    volumes:
+      - ./data:/var/www/downloads
+    ports:
+      - 8080:80
+  nginx-dev:
+    profiles:
+      - dev
+    build:
+      context: catalog
+      dockerfile: nginx/dev.Dockerfile
+    environment:
+      SERVER_NAME: localhost
+      GEOSERVER: geoserver:8080
+      WEBAPP: vite:4173
+    volumes:
+      - ./data:/var/www/downloads
+      - ./catalog/webapp/dist:/var/www/webapp
+    ports:
+      - 8080:80
+  vite:
+    profiles:
+      - dev
+    build:
+      context: catalog
+      dockerfile: webapp/Dockerfile
+    volumes:
+      - ./catalog/webapp/src:/app/src
+      - ./catalog/webapp/dist:/app/dist
