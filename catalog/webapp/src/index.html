@@ -7,7 +7,24 @@
     <title>MARCIS catalog</title>
   </head>
   <body>
-    <div id="map"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col">
+          <h1>MARCIS</h1>
+          <p>
+            This is the MARCIS catalog.
+            It contains a single dataset, served via WMS-T.
+          </p>
+          <p>
+            WMS-T endpoint: <a href="/geoserver/marcis/wms?service=WMS&version=1.1.0&request=GetCapabilities">/geoserver/marcis/wms</a> (layer <i>marcis:marcis</i>).
+          </p>
+          <p>
+            Original data: <a href="downloads/">downloads/</a>
+          </p>
+        </div>
+        <div class="col" id="map"></div>
+      </div>
+    </div>
     <script type="module" src="./js/main.js"></script>
   </body>
 </html>
