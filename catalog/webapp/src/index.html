@@ -22,7 +22,13 @@
             Original data: <a href="downloads/">downloads/</a>
           </p>
         </div>
-        <div class="col" id="map"></div>
+        <div class="col">
+          <div id="map"></div>
+          <button class="btn btn-secondary" type="button" id="play">Play</button>
+          <button class="btn btn-secondary" type="button" id="pause">Pause</button>
+          <label for="timestamp" class="form-label" id="timestampLabel"></label>
+          <input type="range" class="form-range" id="timestampRange" value="0" disabled>
+        </div>
       </div>
     </div>
     <script type="module" src="./js/main.js"></script>

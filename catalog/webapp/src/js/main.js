@@ -31,16 +31,42 @@ const map = new Map({
 });
 
 
+let timestamps;
+let timestamp_index = 0;
+
+function update_range() {
+  let timestamp = timestamps[timestamp_index];
+  document.getElementById("timestampLabel").innerText = timestamp;
+  document.getElementById("timestampRange").value = 100*timestamp_index/timestamps.length;
+}
+
+function next_timestamp() {
+  if (!timestamps) return;
+  timestamp_index++;
+  timestamp_index %= timestamps.length;
+  let timestamp = timestamps[timestamp_index];
+  layers[1].getSource().updateParams({'TIME': timestamp});
+  update_range();
+}
+
+let interval;
+function animation_play() {
+  interval = setInterval(next_timestamp, 2000);
+}
+function animation_pause() {
+  if (interval) {
+    clearInterval(interval);
+  }
+}
+
 let url="/geoserver/marcis/wms?service=WMS&version=1.1.0&request=GetCapabilities";
 fetch(url)
   .then(response => response.text())
   .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
   .then(doc => doc.querySelector('Extent'))
-  .then(node => node.textContent.split(','))
-  .then(timestamps => {
-    timestamps.forEach((timestamp, index) => {
-      setTimeout(_=> {
-        layers[1].getSource().updateParams({'TIME': timestamp});
-      }, (index+1)*1000);
-    });
-  });
+  .then(node => timestamps = node.textContent.split(','))
+  .then(update_range)
+  .then(animation_play);
+
+document.getElementById("play").addEventListener("click", animation_play);
+document.getElementById("pause").addEventListener("click", animation_pause);
