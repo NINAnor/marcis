@@ -1,49 +1,44 @@
+x-common-nginx:
+  &common-nginx
+  ports:
+    - 8001:80
+
 services:
   geoserver:
-    image: geoserver-docker.osgeo.org/geoserver:2.22-RC
+    image: geoserver-docker.osgeo.org/geoserver:2.24.1
     environment:
       SKIP_DEMO_DATA: true
-      INSTALL_EXTENSIONS: true
-      STABLE_EXTENSIONS: wmts-multi-dimensional
+      # INSTALL_EXTENSIONS: true
+      # STABLE_EXTENSIONS: wmts-multi-dimensional
     volumes:
-      - ./geoserver/data/:/opt/geoserver_data/
+      - ./geoserver_data/:/opt/geoserver_data/
       - ./data/:/opt/marcis/
+    ports:
+      - 8087:8080
+
   nginx:
+    <<: *common-nginx
     profiles:
       - prod
-    build:
-      context: catalog
-      dockerfile: nginx/prod.Dockerfile
-    environment:
-      SERVER_NAME: localhost
-      GEOSERVER: geoserver:8080
+    build: .
     volumes:
-      - ./data:/var/www/downloads
-    ports:
-      - 8080:80
+      - ./data:/var/www/data:ro
   nginx-dev:
+    <<: *common-nginx
     profiles:
       - dev
-    build:
-      context: catalog
-      dockerfile: nginx/dev.Dockerfile
-    environment:
-      SERVER_NAME: localhost
-      GEOSERVER: geoserver:8080
-      WEBAPP: vite:4173
+    image: nginx
     volumes:
-      - ./data:/var/www/downloads
-      - ./catalog/webapp/dist:/var/www/webapp
-    ports:
-      - 8080:80
+      - ./data:/var/www/data:ro
+      - ./nginx/dev.conf.template:/etc/nginx/templates/default.conf.template:ro
+
   vite:
+    build:
+      target: frontend
+    volumes:
+      - ./src:/app/src
+      - ./config.js:/app/public/config.js
+    ports:
+      - "3000:3000"
     profiles:
       - dev
-    build:
-      context: catalog
-      dockerfile: webapp/Dockerfile
-    volumes:
-      - ./catalog/webapp/src:/app/src
-      - ./catalog/webapp/dist:/app/dist
-  mapstore:
-    image: geosolutionsit/mapstore2
