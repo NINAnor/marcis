@@ -7,6 +7,7 @@ import Metadata from "./components/Metadata";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import mapApi from "../../api";
 import { NotFoundError } from "../../lib/utils";
+import Lazy from "./components/Lazy";
 
 const fetchMap = async () => {
   const map = await mapApi
@@ -20,10 +21,9 @@ const fetchMap = async () => {
 }
 
 
-const mapQueryOptions = () =>
-  queryOptions({
+const mapQueryOptions = queryOptions({
     queryKey: ['maps'],
-    queryFn: () => fetchMap(),
+    queryFn: fetchMap,
   })
 
 
@@ -32,8 +32,8 @@ export const viewerRoute = new Route({
   path: '/',
   getParentRoute: () => rootRoute,
   errorComponent: MapErrorComponent,
-  loader: ({ context: { queryClient }, params: { mapSlug } }) =>
-    queryClient.ensureQueryData(mapQueryOptions(mapSlug)),
+  loader: ({ context: { queryClient }}) =>
+    queryClient.ensureQueryData(mapQueryOptions),
 })
 
 
@@ -47,9 +47,10 @@ function MapErrorComponent({ error }) {
 
 
 export function Viewer() {
-  const { mapSlug } = viewerRoute.useParams();
-  const mapQuery = useSuspenseQuery(mapQueryOptions(mapSlug));
+  const mapQuery = useSuspenseQuery(mapQueryOptions);
   const map = mapQuery.data;
+
+  console.log(map);
 
   return (
     <MapContextProvider>
@@ -57,6 +58,7 @@ export function Viewer() {
         <div id="sidebar">
           <Metadata {...map.data} />
           <Layers layers={map.data.layers} />
+          <Lazy lazy={map.data.lazy} />
         </div>
         <Map {...map.data} />
       </div>

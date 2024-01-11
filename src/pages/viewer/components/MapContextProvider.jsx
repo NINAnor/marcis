@@ -31,6 +31,7 @@ export default function MapContextProvider({ children }) {
   const [ready, setReady] = React.useState(false);
   const [layers, setLayers] = React.useState({});
   const [style, setStyle] = React.useState(null);
+  const [lazy, setLazy] = React.useState({styles: {}, layers: {}});
 
   const setMap = (m) => {
     map.current = m
@@ -75,6 +76,8 @@ export default function MapContextProvider({ children }) {
     ready,
     layers,
     style,
+    setLazy,
+    lazy
   }
 
   return (

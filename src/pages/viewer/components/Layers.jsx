@@ -4,18 +4,22 @@ import MapContext from "../map";
 import LegendSymbol from "./LegendSymbol";
 
 function Layer({ node, style, dragHandle }) {
-  const { map, layers } = useContext(MapContext);
+  const { map, layers, lazy } = useContext(MapContext);
   const layer = layers[node.data.id];
 
   const icon = layer && layer.isVisible ? 'fas fa-eye' : 'fas fa-eye-slash';
 
   const updateVisibility = () => {
-    map.setLayoutProperty(node.data.id, 'visibility', layer.isVisible ? 'none' : 'visible');
+    if (layer) {
+      map.setLayoutProperty(node.data.id, 'visibility', layer.isVisible ? 'none' : 'visible');
+    } else {
+      map.addLayer(lazy.layers[node.data.id]);
+    }
   }
 
   const legend = useMemo(() => {
-    return layer ? LegendSymbol(layer, map) : null;
-  })
+    return layer ? LegendSymbol(layer, map) : LegendSymbol(lazy.layers[node.data.id], map);
+  }, [layer, lazy])
 
   return (
     <div style={style} ref={dragHandle}>
@@ -79,7 +83,7 @@ export default function Layers({ layers = [] }) {
         disableDrag
         disableDrop
         disableMultiSelection
-        openByDefault
+        openByDefault={false}
         height={count * ROW_HEIGHT}
         indent={10}
         rowHeight={ROW_HEIGHT}
