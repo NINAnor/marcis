@@ -23,11 +23,11 @@ function Layer({ node, style, dragHandle }) {
 
   return (
     <div style={style} ref={dragHandle}>
-      <div style={{ display: 'flex' }}>
-        <div onClick={updateVisibility} style={{ flexGrow: 1, display: 'flex' }}>
+      <div className="row">
+        <div className="row grow group" onClick={updateVisibility}>
           <i className={icon}></i>
-          <div style={{ width: '17px', margin: '0 0.5rem' }}>{legend}</div>
-          <div>{node.data.name}</div>
+          <div className="legend">{legend}</div>
+          <div className="text-truncate">{node.data.name}</div>
         </div>
         {node.data.download && (<div><a href={node.data.download} download><i className="fas fa-download"></i></a></div>)}
       </div>
@@ -38,8 +38,11 @@ function Layer({ node, style, dragHandle }) {
 function Group({ node, style, dragHandle }) {
   return (
     <div style={style} ref={dragHandle}>
-      <div style={{ display: 'flex' }}>
-        <div onClick={() => node.toggle()} style={{ flexGrow: 1 }}><i className={`fas fa-folder${node.isOpen ? '-open' : '' }`}></i> {node.data.name}</div>
+      <div className="row" >
+        <div className="row grow group" onClick={() => node.toggle()}>
+          <i className={`fas fa-folder${node.isOpen ? '-open' : '' }`}></i>
+          <span className="text-truncate">{node.data.name}</span>
+        </div>
         {node.data.download && (<div><a href={node.data.download} download><i className="fas fa-download"></i></a></div>)}
       </div>
     </div>
@@ -86,6 +89,7 @@ export default function Layers({ layers = [] }) {
         openByDefault={false}
         height={count * ROW_HEIGHT}
         indent={10}
+        width={400}
         rowHeight={ROW_HEIGHT}
         overscanCount={1}
         ref={ref}

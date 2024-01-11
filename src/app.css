@@ -52,3 +52,26 @@ details summary + div {
   max-height: 200px;
   overflow-y: scroll;
 }
+
+.text-truncate {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.layers .row {
+  display: flex;
+}
+
+.layers .grow {
+  flex-grow: 1;
+}
+
+.layers .group i {
+  margin-right: 0.5rem;
+}
+
+.layers .legend {
+  width: 17px;
+  margin: 0 0.5rem;
+}
