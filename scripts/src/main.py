@@ -1,5 +1,6 @@
 import pathlib
 import calendar
+import csv
 
 import rasterio
 import numpy as np
@@ -77,7 +78,7 @@ def colorscale(source, colormap='viridis'):
     return cog_path
 
 
-def to_hierarchy(key_map, parent_key=""):
+def to_hierarchy(key_map, parent_key="", colony_map={}):
     layers = []
     for k in key_map.keys():
         id = '_'.join(filter(lambda x:x, [parent_key, k]))
@@ -85,7 +86,7 @@ def to_hierarchy(key_map, parent_key=""):
         if k.startswith('m'):
             name = to_month(k)
         elif k.startswith('c'):
-            name = f'Colony {k[1:]}'
+            name = colony_map[k[1:].lstrip('0')]
         else:
             name = SPECIES_MAP[k].replace('_', ' ')
     
@@ -94,7 +95,7 @@ def to_hierarchy(key_map, parent_key=""):
             "name": name,
         }
         if key_map[k]:
-            layer['children'] = to_hierarchy(key_map[k], id)
+            layer['children'] = to_hierarchy(key_map[k], id, colony_map=colony_map)
 
         layers.append(layer)
 
@@ -103,16 +104,23 @@ def to_hierarchy(key_map, parent_key=""):
 
 @click.command()
 @click.argument("cog_directory")
+@click.argument("colony_csv")
 @click.option("--output", help="write to output")
 @click.option('--colormap', default='Reds', help="Matplotlib colormap to apply")
 @click.option("--prefix", default="")
 @click.option( "--template_path", default=".")
-def generate_files(cog_directory, prefix, output, template_path, colormap):
+def generate_files(cog_directory, colony_csv, prefix, output, template_path, colormap):
     env = Environment(
         loader=PackageLoader('main'),
         autoescape=select_autoescape()
     )
     BASE = pathlib.Path(cog_directory)
+
+    COLONY = {}
+    with open(colony_csv, 'r') as f:
+        reader = csv.DictReader(f, delimiter=";")
+        for row in reader:
+            COLONY[row['code']] = row['name_id'].replace('_', ' ')
 
     SOURCES = {}
     LAZY_SOURCES = {}
@@ -161,7 +169,7 @@ def generate_files(cog_directory, prefix, output, template_path, colormap):
     with open(f'{output}/metadata.json', 'w+') as f:
         template = env.get_template("metadata.json.tpl")
         f.write(template.render({
-            "layers": to_hierarchy(LAYERS),
+            "layers": to_hierarchy(LAYERS, colony_map=COLONY),
             "lazy_sources": LAZY_SOURCES,
             "lazy_layers": {k: {"id": k, "type": "raster", "source": LAZY_SOURCES[k]}  for k in LAZY_SOURCES.keys()}
         }))
