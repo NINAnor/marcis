@@ -1,15 +1,19 @@
 import pathlib
 import calendar
 import csv
+import zipfile
 
 import rasterio
 import numpy as np
 from osgeo import gdal
 from matplotlib import pyplot as plt
+from matplotlib import colors
 import pathlib
 from jinja2 import Environment, PackageLoader, select_autoescape
 import click
 
+
+cmap = colors.LinearSegmentedColormap.from_list("", ['#f0f921', '#fdca26', '#fb9f3a', '#ed7953', '#d8576b', '#bd3786', '#9c179e', '#7201a8', '#46039f', '#0d0887'])
 
 SPECIES_NAMES = ("Alle_alle", "Fratercula_arctica", "Fulmarus_glacialis", "Rissa_tridactyla", "Uria_aalge", "Uria_lomvia")
 SPECIES_CODES = ("ALALL", "FRARC", "FUGLA", "RITRI", "URAAL", "URLOM")
@@ -36,7 +40,7 @@ def colorscale(source, colormap='viridis'):
 
     # extract only the first band, mask nodata values
     band = src.read(1, masked=True)
-    cmap = plt.get_cmap(colormap)
+    # cmap = plt.get_cmap(colormap)
 
     # Normalize grayscale values between 0 and 1
     normalized_data = (band - band.min()) / (band.max() - band.min())
@@ -78,7 +82,7 @@ def colorscale(source, colormap='viridis'):
     return cog_path
 
 
-def to_hierarchy(key_map, parent_key="", colony_map={}):
+def to_hierarchy(key_map, prefix, parent_key="", colony_map={}, downloads={}, zips={}):
     layers = []
     for k in key_map.keys():
         id = '_'.join(filter(lambda x:x, [parent_key, k]))
@@ -94,8 +98,12 @@ def to_hierarchy(key_map, parent_key="", colony_map={}):
             "id": id,
             "name": name,
         }
+        if id in downloads:
+            layer['download'] = downloads[id]
+        if id in zips:
+            layer['download'] = f'/{zips[id].relative_to(prefix)}'
         if key_map[k]:
-            layer['children'] = to_hierarchy(key_map[k], id, colony_map=colony_map)
+            layer['children'] = to_hierarchy(key_map[k], parent_key=id, colony_map=colony_map, downloads=downloads, zips=zips, prefix=prefix)
 
         layers.append(layer)
 
@@ -124,6 +132,7 @@ def generate_files(cog_directory, colony_csv, prefix, output, template_path, col
 
     SOURCES = {}
     LAZY_SOURCES = {}
+    DOWNLOADS = {}
 
     SOURCES["osm"] = {
         "type": "raster",
@@ -142,6 +151,7 @@ def generate_files(cog_directory, colony_csv, prefix, output, template_path, col
                 "type": "raster",
                 "url": f"cog:///{str(BASE.relative_to(prefix))}/{cog_path.name}"
             }
+            DOWNLOADS[name] = f"/{str(BASE.relative_to(prefix))}/{cog_path.name}"
     
     template = env.get_template("style.json.tpl")
     
@@ -153,14 +163,23 @@ def generate_files(cog_directory, colony_csv, prefix, output, template_path, col
 
 
     LAYERS = {}
+    ZIPS = {}
+    ZIP_MAP = {}
     for k in LAZY_SOURCES.keys():
         try:
             species, colony, month = k.split("_")
             if not species in LAYERS:
                 LAYERS[species] = {}
+                ZIP_MAP[species] = BASE / f'{species}.zip'
+                ZIPS[species] = zipfile.ZipFile(ZIP_MAP[species], 'w')
+            ZIPS[species].write(BASE / f'{k}.tif')
 
+            combo = f'{species}_{colony}'
             if not colony in LAYERS[species]:
                 LAYERS[species][colony] = {}
+                ZIP_MAP[combo] = BASE / f'{combo}.zip'
+                ZIPS[combo] = zipfile.ZipFile(ZIP_MAP[combo], 'w')
+            ZIPS[combo].write(BASE / f'{k}.tif')
 
             LAYERS[species][colony][month] = {} 
         except ValueError:
@@ -169,7 +188,7 @@ def generate_files(cog_directory, colony_csv, prefix, output, template_path, col
     with open(f'{output}/metadata.json', 'w+') as f:
         template = env.get_template("metadata.json.tpl")
         f.write(template.render({
-            "layers": to_hierarchy(LAYERS, colony_map=COLONY),
+            "layers": to_hierarchy(LAYERS, colony_map=COLONY, downloads=DOWNLOADS, zips=ZIP_MAP, prefix=prefix),
             "lazy_sources": LAZY_SOURCES,
             "lazy_layers": {k: {"id": k, "type": "raster", "source": LAZY_SOURCES[k]}  for k in LAZY_SOURCES.keys()}
         }))
