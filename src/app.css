@@ -6,6 +6,7 @@ html,
 body {
   height: 100%;
   margin: 0;
+  font-family: "Open Sans";
 }
 
 .map {
@@ -74,4 +75,25 @@ details summary + div {
 .layers .legend {
   width: 17px;
   margin: 0 0.5rem;
+}
+
+.logo {
+  max-width: 100%;
+  padding-top: 0.3rem;
+}
+
+#sidebar {
+  background: linear-gradient(#C5E1E4 0%, #fff 25%);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #697B8B;
+}
+
+i.fas {
+  color: #697B8B;
+}
+
+a, a > i.fas {
+  color: #5BC6CC;
 }
