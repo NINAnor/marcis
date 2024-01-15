@@ -151,7 +151,7 @@ def generate_files(cog_directory, colony_csv, prefix, output, template_path, col
                 "type": "raster",
                 "url": f"cog:///{str(BASE.relative_to(prefix))}/{cog_path.name}"
             }
-            DOWNLOADS[name] = f"/{str(BASE.relative_to(prefix))}/{cog_path.name}"
+            DOWNLOADS[name] = f"/{str(BASE.relative_to(prefix))}/{filepath.name}"
     
     template = env.get_template("style.json.tpl")
     
