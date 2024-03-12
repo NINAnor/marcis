@@ -3,6 +3,9 @@ server {
     server_name  localhost;
     root   /var/www;
 
+    auth_basic           "Marcis Maps";
+    auth_basic_user_file /htpass/.htpasswd;
+
     location ~* ^/data/(.+)/(.+)$ {
         try_files $uri $uri/;
     }
